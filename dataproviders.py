@@ -61,10 +61,11 @@ class CachedTiledDataProvider(TiledDataProvider):
     DataProvider class for tiled maps with simple dictionary based caching.
     """
 
-    def __init__(self, url_template, value_fn, tile_size=256, zoom=12, convert_args=None):
+    def __init__(self, url_template, value_fn, tile_size=256, zoom=12, convert_args=None, headers=None):
         super().__init__(url_template, value_fn, tile_size, zoom)
         self.logger = logging.getLogger('dataproviders.CachedTiledDataProvider')
         self.convert_args = convert_args
+        self.headers = headers
         self.cache = {}
 
     def get_value(self, lng: float, lat: float) -> float:
@@ -94,7 +95,7 @@ class CachedTiledDataProvider(TiledDataProvider):
         """
         url = self.url.substitute({'x': x, 'y': y, 'z': z})
         try:
-            response = requests.get(url)
+            response = requests.get(url, headers=self.headers)
             img = Image.open(BytesIO(response.content))
             if self.convert_args:
                 return img.convert(**self.convert_args)

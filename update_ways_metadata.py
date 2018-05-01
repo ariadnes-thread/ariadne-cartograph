@@ -72,6 +72,26 @@ def process_strava_heatmap(cursor) -> None:
     upsert_ways_metadata(cursor, 'popularity', ways_metadata)
 
 
+def process_strava_heatmap_highres(cursor, config) -> None:
+    """
+    Gathers data from Strava heatmap tile maps
+
+    :param cursor: database cursor object
+    :param config: parsed config.yaml
+    """
+
+    def strava_value(img, x, y):
+        return float(img.getpixel((x, y))) / 255
+
+    logger.info('Gathering Highres Strava popularity data.')
+    heaturl = 'https://heatmap-external-b.strava.com/tiles-auth/all/hot/${z}/${x}/${y}.png'
+    strava_provider = CachedTiledDataProvider(heaturl, strava_value, tile_size=512, zoom=15, convert_args={'mode': 'L'},
+                                              headers=config['strava']['headers'])
+
+    ways_metadata = extract_ways_metadata(cursor, strava_provider)
+    upsert_ways_metadata(cursor, 'popularity_highres', ways_metadata)
+
+
 def process_gmaps_satellite(cursor) -> None:
     """
     Gathers data from Google satellite tile maps
@@ -103,6 +123,7 @@ if __name__ == "__main__":
         with psycopg2.connect(**config['database']) as conn:
             cursor = conn.cursor()
             process_strava_heatmap(cursor)
+            # process_strava_heatmap_highres(cursor, config)
             process_gmaps_satellite(cursor)
             cursor.close()
         logger.info('Script finished.')

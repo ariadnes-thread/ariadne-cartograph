@@ -1,6 +1,12 @@
+#  PostGIS database details
 database:
   dbname: dbname
   user: user
   password: password
   host: host
   port: 5432
+
+#  Strava authed endpoint (optional)
+strava:
+  headers:
+    Cookie: cookie string
