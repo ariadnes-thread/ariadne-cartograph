@@ -8,6 +8,10 @@ from typing import Optional
 
 
 class TiledDataProvider(object):
+    """
+    Abstract DataProvider class for tiled maps.
+    """
+
     def __init__(self, url_template, value_fn, tile_size=256, zoom=12):
         self.logger = logging.getLogger('dataproviders.TiledDataProvider')
         self.url = Template(url_template)
@@ -53,6 +57,10 @@ class TiledDataProvider(object):
 
 
 class CachedTiledDataProvider(TiledDataProvider):
+    """
+    DataProvider class for tiled maps with simple dictionary based caching.
+    """
+
     def __init__(self, url_template, value_fn, tile_size=256, zoom=12, convert_args=None):
         super().__init__(url_template, value_fn, tile_size, zoom)
         self.logger = logging.getLogger('dataproviders.CachedTiledDataProvider')
