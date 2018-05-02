@@ -99,15 +99,27 @@ def process_gmaps_satellite(cursor) -> None:
     :param cursor: database cursor object
     """
 
-    def greenery_value(img, x, y):
+    # noinspection PyUnusedLocal
+    def greenery_value_relative(img, x, y):
         box = (max(0, x - 10), max(0, y - 10), min(256, x + 10), min(256, y + 10))
         neighborhood = img.crop(box).resize((1, 1))
         r, g, b = neighborhood.getpixel((0, 0))
         return min(1., float(max(g - max(r, b), 0)) / 200)
 
+    def greenery_value_absolute(img, x, y):
+        box = (max(0, x - 10), max(0, y - 10), min(256, x + 10), min(256, y + 10))
+        neighborhood = img.crop(box)
+        # Get values in each channel as byte array
+        r = np.array(neighborhood.getdata(0))
+        g = np.array(neighborhood.getdata(1))
+        b = np.array(neighborhood.getdata(2))
+        # Get proportion of pixels where green is dominant channel
+        g_delta = np.clip(np.minimum(g-r, g-b), 0, 1).mean()
+        return g_delta
+
     logger.info('Gathering Gmaps satellite data.')
     url = 'http://mt1.google.com/vt/lyrs=s&x=${x}&y=${y}&z=${z}'
-    gmaps_provider = CachedTiledDataProvider(url, greenery_value, zoom=15, convert_args={'mode': 'RGB'})
+    gmaps_provider = CachedTiledDataProvider(url, greenery_value_absolute, zoom=15, convert_args={'mode': 'RGB'})
 
     ways_metadata = extract_ways_metadata(cursor, gmaps_provider)
     upsert_ways_metadata(cursor, 'greenery', ways_metadata)
